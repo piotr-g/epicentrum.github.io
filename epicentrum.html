@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EKG — Epicentrum Konrada Grabowskiego</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #E8173A;
+    --black: #0D0D0D;
+    --white: #F5F2EC;
+    --off: #EDEAE3;
+    --gray: #888;
+    --r: 20px;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes ekg {
+    from { stroke-dashoffset: 1200; }
+    to   { stroke-dashoffset: 0; }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes ping {
+    0%   { transform: scale(1); opacity: .7; }
+    100% { transform: scale(2.6); opacity: 0; }
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 48px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(245,242,236,0.75);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px; letter-spacing: 0.1em;
+    color: var(--black); text-decoration: none;
+  }
+  .nav-logo span { color: var(--red); }
+  nav ul { list-style: none; display: flex; gap: 36px; }
+  nav ul a {
+    font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--black); text-decoration: none; font-weight: 400;
+    position: relative; padding-bottom: 2px;
+  }
+  nav ul a::after {
+    content: ''; position: absolute; bottom: 0; left: 0;
+    width: 0; height: 1px; background: var(--red);
+    transition: width 0.3s ease;
+  }
+  nav ul a:hover::after { width: 100%; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 130px 48px 110px;
+    position: relative; overflow: hidden;
+  }
+  .hero-watermark {
+    position: absolute; inset: 0; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(160px, 26vw, 380px);
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(0,0,0,0.045);
+    letter-spacing: -0.02em; user-select: none;
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 880px; }
+
+  .hero-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--red); font-weight: 500;
+    border: 1px solid var(--red); padding: 7px 16px; border-radius: 100px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.8s ease both;
+  }
+  .hero-pill-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--red);
+    flex-shrink: 0;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(70px, 11.5vw, 152px);
+    line-height: 0.9; letter-spacing: -0.01em; color: var(--black);
+    animation: fadeUp 0.8s 0.15s ease both;
+  }
+  h1 em { color: var(--red); font-style: normal; }
+
+  .hero-sub {
+    margin-top: 32px; max-width: 480px;
+    font-size: 17px; line-height: 1.72; color: #565656;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+  .hero-cta {
+    margin-top: 44px; display: flex; gap: 14px; flex-wrap: wrap;
+    animation: fadeUp 0.8s 0.45s ease both;
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 30px; border-radius: 100px;
+    font-size: 14px; font-weight: 500; letter-spacing: 0.04em;
+    text-decoration: none; transition: all 0.22s ease;
+    font-family: 'DM Sans', sans-serif; border: none; cursor: pointer;
+  }
+  .btn-primary { background: var(--red); color: #fff; }
+  .btn-primary:hover { background: #c9102e; transform: translateY(-2px); box-shadow: 0 10px 28px rgba(232,23,58,0.32); }
+  .btn-dark { background: var(--black); color: var(--white); }
+  .btn-dark:hover { background: #2a2a2a; transform: translateY(-2px); }
+  .btn-outline { background: transparent; color: var(--black); border: 1.5px solid rgba(13,13,13,0.3); }
+  .btn-outline:hover { background: var(--black); color: var(--white); transform: translateY(-2px); }
+  .btn-white { background: var(--white); color: var(--red); }
+  .btn-white:hover { background: var(--black); color: var(--white); transform: translateY(-2px); }
+  .btn-ghost { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.4); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.15); }
+
+  /* pulse dot hero */
+  .pulse-wrap {
+    position: absolute; right: 80px; top: 50%; transform: translateY(-50%); z-index: 1;
+    animation: fadeUp 1s 0.6s ease both;
+  }
+  .pulse-core {
+    width: 16px; height: 16px; border-radius: 50%; background: var(--red); position: relative;
+  }
+  .pulse-core::before, .pulse-core::after {
+    content: ''; position: absolute; inset: 0;
+    border-radius: 50%; border: 2px solid var(--red);
+    animation: ping 2s ease-out infinite;
+  }
+  .pulse-core::after { animation-delay: 0.8s; }
+
+  /* EKG bottom strip */
+  .ekg-strip {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 68px; overflow: hidden;
+  }
+  .ekg-strip svg { width: 100%; height: 100%; }
+  .ekg-line {
+    fill: none; stroke: var(--red); stroke-width: 1.5; opacity: 0.45;
+    stroke-dasharray: 1200; stroke-dashoffset: 1200;
+    animation: ekg 3.5s 0.6s ease forwards;
+  }
+
+  /* ── SHARED SECTION STYLES ── */
+  .sec { padding: 96px 48px; }
+  .sec-dark { background: var(--black); color: var(--white); }
+  .sec-dark h2 { color: var(--white); }
+  .sec-dark p { color: rgba(245,242,236,0.62); }
+  .sec-dark .bar { background: var(--red); }
+
+  .bar { width: 44px; height: 3px; background: var(--red); border-radius: 2px; margin-bottom: 22px; }
+
+  h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(50px, 6.5vw, 90px);
+    line-height: 0.93; letter-spacing: 0.01em; color: var(--black);
+    margin-bottom: 36px;
+  }
+
+  /* ── PROGRAM ── */
+  #program { background: var(--off); }
+  .prog-tabs {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 44px; margin-bottom: 28px;
+  }
+  .prog-tab {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 100px;
+    font-size: 13px; font-weight: 500; letter-spacing: 0.04em;
+    background: #fff; color: var(--black);
+    border: 1.5px solid rgba(0,0,0,0.1);
+    cursor: pointer; transition: all 0.2s ease;
+    user-select: none; font-family: 'DM Sans', sans-serif;
+  }
+  .prog-tab .tab-ico { font-size: 16px; }
+  .prog-tab:hover { border-color: var(--red); color: var(--red); }
+  .prog-tab.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+  .prog-panel {
+    background: #fff;
+    border-radius: 24px;
+    padding: 48px;
+    display: none;
+    animation: fadeUp 0.35s ease both;
+  }
+  .prog-panel.active { display: block; }
+  .prog-panel-inner {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start;
+  }
+  .prog-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 96px; line-height: 1; color: var(--red); opacity: 0.1;
+    margin-bottom: -16px;
+  }
+  .prog-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px; line-height: 1; letter-spacing: 0.02em;
+    color: var(--black); margin-bottom: 16px;
+  }
+  .prog-desc { font-size: 16px; line-height: 1.75; color: #555; max-width: 420px; }
+  .prog-points { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+  .prog-points li {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 14.5px; line-height: 1.6; color: var(--black);
+  }
+  .prog-points li::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--red);
+    flex-shrink: 0; margin-top: 7px;
+  }
+  .prog-visual {
+    background: var(--off); border-radius: 18px;
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  }
+  .prog-visual svg { width: 55%; height: 55%; }
+
+  /* ── KONRAD ── */
+  .konrad-wrap { display: grid; grid-template-columns: 1fr 1.1fr; gap: 72px; align-items: center; }
+  .konrad-img {
+    aspect-ratio: 3/4; max-height: 500px; width: 100%;
+    background: #181818; border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 96px;
+    color: rgba(232,23,58,0.16); letter-spacing: -0.03em;
+    position: relative; overflow: hidden;
+  }
+  /* Zdjęcie KG — podmień src na własne zdjęcie */
+  .konrad-photo {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center top;
+    border-radius: 24px;
+    display: block;
+  }
+  .konrad-img::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(232,23,58,0.22) 0%, transparent 55%);
+    border-radius: 24px;
+    pointer-events: none;
+  }
+  .blockquote {
+    font-size: clamp(20px, 2.6vw, 31px); line-height: 1.44;
+    font-style: italic; font-weight: 300; color: var(--white); margin-bottom: 18px;
+  }
+  .blockquote-sig { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--red); }
+  .bio { margin-top: 24px; font-size: 15px; line-height: 1.78; color: rgba(245,242,236,0.58); }
+
+  /* ── JOIN ── */
+  #dolacz {
+    background: var(--red);
+    color: #fff;
+    text-align: center;
+    padding: 112px 48px;
+  }
+  #dolacz h2 { color: #fff; font-size: clamp(64px, 10.5vw, 136px); }
+  #dolacz .bar { background: rgba(255,255,255,0.35); margin: 0 auto 22px; }
+  #dolacz > div > p { color: rgba(255,255,255,0.82); max-width: 440px; margin: 0 auto 44px; font-size: 17px; line-height: 1.7; }
+  .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+  /* ── MANIFEST TOGGLE SECTION ── */
+  #manifest {
+    background: var(--black);
+  }
+
+  .manifest-toggle-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 40px 48px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .manifest-toggle-bar:hover { background: rgba(255,255,255,0.03); }
+
+  .manifest-toggle-left {
+    display: flex; align-items: center; gap: 28px;
+  }
+  .manifest-toggle-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 5vw, 64px);
+    color: var(--white); line-height: 1; letter-spacing: 0.02em;
+  }
+  .manifest-toggle-label span { color: var(--red); }
+  .manifest-toggle-sub {
+    font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(245,242,236,0.35); font-weight: 400;
+  }
+  .manifest-toggle-info {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+
+  .manifest-toggle-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--white); font-size: 22px;
+    transition: all 0.35s ease;
+    flex-shrink: 0;
+  }
+  .manifest-toggle-bar:hover .manifest-toggle-icon {
+    border-color: var(--red); background: var(--red);
+  }
+  .manifest-toggle-icon svg {
+    transition: transform 0.35s ease;
+  }
+  .manifest-open .manifest-toggle-icon svg {
+    transform: rotate(180deg);
+  }
+  .manifest-open .manifest-toggle-icon {
+    border-color: var(--red); background: var(--red);
+  }
+
+  /* ── MANIFEST CONTENT (collapsible) ── */
+  .manifest-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .manifest-body.open {
+    max-height: 9999px;
+  }
+
+  /* ── MANIFEST HERO (inside collapsible) ── */
+  .manifest-hero {
+    min-height: 44vh;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 72px 48px;
+    position: relative; overflow: hidden;
+    background: var(--black);
+  }
+  .manifest-hero-watermark {
+    position: absolute; inset: 0; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(120px, 20vw, 300px);
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255,255,255,0.035);
+    letter-spacing: -0.02em; user-select: none;
+  }
+  .manifest-hero-content { position: relative; z-index: 1; }
+  .manifest-hero-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--red); font-weight: 500;
+    border: 1px solid var(--red); padding: 7px 16px; border-radius: 100px;
+    margin-bottom: 28px;
+  }
+  .manifest-h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(64px, 10vw, 132px);
+    line-height: 0.88; letter-spacing: -0.01em; color: var(--white);
+  }
+  .manifest-h1 em { color: var(--red); font-style: normal; }
+  .manifest-hero-sub {
+    margin-top: 24px; max-width: 540px;
+    font-size: 16px; line-height: 1.72; color: rgba(245,242,236,0.55);
+  }
+
+  /* ── MANIFEST INTRO ── */
+  .manifest-intro { padding: 80px 48px; background: var(--black); }
+  .intro-grid {
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 80px; align-items: start;
+  }
+  .intro-lead {
+    font-size: clamp(20px, 2.6vw, 32px); line-height: 1.38; font-weight: 300;
+    color: var(--white);
+  }
+  .intro-lead strong { color: var(--red); font-weight: 500; }
+  .intro-meta { display: flex; flex-direction: column; gap: 20px; padding-top: 8px; }
+  .meta-item { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; }
+  .meta-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; }
+  .meta-val { font-size: 14px; color: rgba(245,242,236,0.7); line-height: 1.5; }
+
+  /* ── POSTULATY ── */
+  .manifest-postulaty { padding: 80px 48px; background: var(--off); }
+  .postulaty-intro { max-width: 600px; margin-bottom: 64px; }
+  .postulaty-intro p { font-size: 16px; line-height: 1.75; color: #555; }
+  .postulat-list { display: flex; flex-direction: column; gap: 2px; }
+  .postulat {
+    background: #fff; border-radius: 0;
+    display: grid; grid-template-columns: 80px 1fr auto;
+    align-items: center; gap: 32px;
+    padding: 28px 36px;
+    transition: background 0.2s ease;
+    position: relative;
+  }
+  .postulat:first-child { border-radius: 20px 20px 0 0; }
+  .postulat:last-child  { border-radius: 0 0 20px 20px; }
+  .postulat:only-child  { border-radius: 20px; }
+  .postulat:hover { background: var(--black); }
+  .postulat:hover .p-num  { color: rgba(232,23,58,0.4); }
+  .postulat:hover .p-title { color: var(--white); }
+  .postulat:hover .p-desc  { color: rgba(245,242,236,0.5); }
+  .postulat:hover .p-tag   { background: rgba(232,23,58,0.15); color: var(--red); }
+  .p-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px; line-height: 1; color: rgba(13,13,13,0.12);
+    transition: color 0.2s; user-select: none;
+  }
+  .p-body { display: flex; flex-direction: column; gap: 4px; }
+  .p-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px; letter-spacing: 0.03em; color: var(--black);
+    transition: color 0.2s;
+  }
+  .p-desc { font-size: 14px; line-height: 1.6; color: #666; transition: color 0.2s; max-width: 680px; }
+  .p-tag {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500;
+    background: var(--off); color: var(--gray);
+    padding: 5px 12px; border-radius: 100px;
+    white-space: nowrap; transition: background 0.2s, color 0.2s;
+  }
+
+  /* ── WARTOSCI ── */
+  .manifest-wartosci { padding: 80px 48px; background: var(--black); }
+  .wartosci-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+    margin-top: 48px;
+  }
+  .wartosc {
+    background: rgba(255,255,255,0.04); border-radius: 0;
+    padding: 36px 32px;
+    transition: background 0.2s;
+  }
+  .wartosci-grid .wartosc:first-child { border-radius: 20px 0 0 20px; }
+  .wartosci-grid .wartosc:last-child  { border-radius: 0 20px 20px 0; }
+  .wartosc:hover { background: rgba(232,23,58,0.08); }
+  .w-num {
+    font-family: 'Bebas Neue', sans-serif; font-size: 56px; line-height: 1;
+    color: var(--red); opacity: 0.2; margin-bottom: 16px;
+  }
+  .w-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.03em;
+    color: var(--white); margin-bottom: 10px;
+  }
+  .w-desc { font-size: 14px; line-height: 1.68; color: rgba(245,242,236,0.5); }
+
+  /* ── CYTAT ── */
+  .manifest-cytat {
+    background: var(--red);
+    padding: 96px 48px;
+    text-align: center;
+  }
+  .big-quote {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(32px, 5vw, 68px);
+    line-height: 1.1; color: #fff;
+    max-width: 960px; margin: 0 auto 28px;
+  }
+  .big-quote-sig { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+
+  /* ── MANIFEST SIGN ── */
+  .manifest-sign { padding: 80px 48px; background: var(--black); text-align: center; }
+  .manifest-sign h2 { color: var(--white); }
+  .manifest-sign p { color: rgba(245,242,236,0.6); max-width: 440px; margin: 0 auto 44px; font-size: 16px; line-height: 1.7; }
+  .manifest-sign .bar { margin: 0 auto 22px; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--black); padding: 34px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+    font-size: 12px; letter-spacing: 0.055em; color: rgba(245,242,236,0.3);
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .foot-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--red); letter-spacing: 0.1em; }
+  footer a { color: inherit; text-decoration: none; }
+  footer a:hover { color: var(--red); }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.on { opacity: 1; transform: none; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 800px) {
+    nav { padding: 18px 20px; }
+    nav ul { gap: 20px; }
+    .sec, #hero, #dolacz { padding: 80px 20px; }
+    h1 { font-size: clamp(56px, 14vw, 100px); }
+    .konrad-wrap, .prog-panel-inner, .intro-grid { grid-template-columns: 1fr; gap: 36px; }
+    .pulse-wrap { display: none; }
+    .prog-panel { padding: 28px 20px; }
+    footer { flex-direction: column; text-align: center; padding: 28px 20px; }
+    .manifest-toggle-bar { padding: 28px 20px; }
+    .manifest-hero, .manifest-intro, .manifest-postulaty,
+    .manifest-wartosci, .manifest-cytat, .manifest-sign { padding: 60px 20px; }
+    .wartosci-grid { grid-template-columns: 1fr; }
+    .wartosci-grid .wartosc:first-child,
+    .wartosci-grid .wartosc:last-child { border-radius: 0; }
+    .postulat { grid-template-columns: 48px 1fr; gap: 16px; padding: 20px; }
+    .p-tag { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">E<span>K</span>G</a>
+  <ul>
+    <li><a href="#program">Program</a></li>
+    <li><a href="#konrad">Konrad</a></li>
+    <li><a href="#manifest">Manifest</a></li>
+    <li><a href="#dolacz">Dołącz</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-watermark">EKG</div>
+  <div class="hero-content">
+    <div class="hero-pill">
+      <span class="hero-pill-dot"></span>
+      Nowa siła w polskiej polityce
+    </div>
+    <h1>Epice<em>n</em>trum<br>Konrada<br>Grabow<em>s</em>kiego</h1>
+    <p class="hero-sub">Polityka z mózgiem. Królestwo inteligentnych i przystojnych polityków</p>
+
+  </div>
+  <div class="pulse-wrap">
+    <div class="pulse-core"></div>
+  </div>
+  <div class="ekg-strip">
+    <svg viewBox="0 0 1440 68" preserveAspectRatio="none">
+      <path class="ekg-line" d="
+        M0,34 L100,34 L128,34 L146,6 L160,62 L176,6 L192,34 L224,34
+        L344,34 L372,34 L390,6 L404,62 L420,6 L436,34 L464,34
+        L584,34 L612,34 L630,6 L644,62 L660,6 L676,34 L704,34
+        L824,34 L852,34 L870,6 L884,62 L900,6 L916,34 L944,34
+        L1064,34 L1092,34 L1110,6 L1124,62 L1140,6 L1156,34 L1184,34
+        L1304,34 L1332,34 L1350,6 L1364,62 L1380,6 L1396,34 L1440,34
+      "/>
+    </svg>
+  </div>
+</section>
+
+<!-- PROGRAM -->
+<section class="sec" id="program">
+  <div class="reveal">
+    <div class="bar"></div>
+    <h2>Program<br>Działania</h2>
+    <p style="max-width:500px; font-size:16px; line-height:1.72; color:#555;">Konkretne kroki, i puste obietnice. Wiemy, czego chcemy — i wiemy, kogo nie lubimy</p>
+  </div>
+
+  <div class="prog-tabs reveal" role="tablist">
+    <button class="prog-tab active" onclick="switchTab(0)" role="tab">Gospodarka</button>
+    <button class="prog-tab" onclick="switchTab(1)" role="tab">Zdrowie</button>
+    <button class="prog-tab" onclick="switchTab(2)" role="tab">Edukacja</button>
+    <button class="prog-tab" onclick="switchTab(3)" role="tab">Klimat</button>
+    <button class="prog-tab" onclick="switchTab(4)" role="tab">Samorząd</button>
+    <button class="prog-tab" onclick="switchTab(5)" role="tab">Cyfryzacja</button>
+  </div>
+
+  <div class="reveal">
+    <!-- 0 -->
+    <div class="prog-panel active">
+      <div class="prog-panel-inner">
+        <div>
+          <div class="prog-num">01</div>
+          <div class="prog-title">Gospodarka</div>
+          <p class="prog-desc">Wsparcie samorządu uczniowskiego, uproszczenie podatków i koniec biurokracji duszącej uczniów. Szkolna gospodarka powinna nagradzać tych, którzy są lepsi.</p>
+          <ul class="prog-points">
+            <li>Uproszczenie systemu podatkowego dla niskich uczniów</li>
+            <li>Redukcja biurokracji dla osób nauczycielskich</li>
+            <li>Ograniczenie monopolu stołówki szkolnej</li>
+            <li>Uczciwe warunki dla prawie wszystkich</li>
+          </ul>
+        </div>
+        <div class="prog-visual" data-tab="0"></div>
+      </div>
+    </div>
+    <!-- 1 -->
+    <div class="prog-panel">
+      <div class="prog-panel-inner">
+        <div>
+          <div class="prog-num">02</div>
+          <div class="prog-title">Zdrowie</div>
+          <p class="prog-desc">Więcej papieru, krótsze kolejki, nowoczesne pisuary dla każdego. Pisuary to prawo — nie przywilej dla wybranych.</p>
+          <ul class="prog-points">
+            <li>Biały papier jest lepszy od szarego, bo jest biały</li>
+            <li>Pisuary dla kobiet - stop dyskryminacji</li>
+            <li>Teletoalety dostępne w całej szkole</li>
+            <li>Częstrze urlopy dla pielengniarki - i tak jej nie ma</li>
+          </ul>
+        </div>
+        <div class="prog-visual" data-tab="1"></div>
+      </div>
+    </div>
+    <!-- 2 -->
+    <div class="prog-panel">
+      <div class="prog-panel-inner">
+        <div>
+          <div class="prog-num">03</div>
+          <div class="prog-title">Edukacja</div>
+          <p class="prog-desc">Szkoły bez zbędnych zasad. Nauczyciele nonprofit. Uczniowie na drugim miejscu</p>
+          <ul class="prog-points">
+            <li>Uproszczenie statutu szkoły</li>
+            <li>Mniejsze klasy — max 40 uczniów</li>
+            <li>E-lekcje z biologii</li>
+            <li>Darmowe podręczniki cyfrowe z kodem: KONDZIOKRUL</li>
+          </ul>
+        </div>
+        <div class="prog-visual" data-tab="2"></div>
+      </div>
+    </div>
+    <!-- 3 -->
+    <div class="prog-panel">
+      <div class="prog-panel-inner">
+        <div>
+          <div class="prog-num">04</div>
+          <div class="prog-title">Klimat</div>
+          <p class="prog-desc">Odnawialne źródła energii, brudniejsze powietrze i zielone zakazy — to inwestycja w przyszłość, nie koszt dla dziś.</p>
+          <ul class="prog-points">
+            <li>30% brudniejsze powietrze na terenie szkoły</li>
+            <li>Dotacje na pompy ciepła i kominki węglowe w każdej sali</li>
+            <li>Przerobienie klasy 005b na elektrownie biotermalną</li>
+            <li>Nakaz spalania śmieci — realna egzekucja</li>
+          </ul>
+        </div>
+        <div class="prog-visual" data-tab="3"></div>
+      </div>
+    </div>
+    <!-- 4 -->
+    <div class="prog-panel">
+      <div class="prog-panel-inner">
+        <div>
+          <div class="prog-num">05</div>
+          <div class="prog-title">Samorząd</div>
+          <p class="prog-desc">Więcej władzy dla przewodniczącego. Ograniczamy władze nauczycieli</p>
+          <ul class="prog-points">
+            <li>Przemianowanie przewodniczącego szkoły na prezydenta</li>
+            <li>Budżet na posiłki dla samorządu</li>
+            <li>Koniec centralnego sterowania inwestycjami</li>
+            <li>Zakaz białych butów - obrażają one czarnych uczniów naszej szkoły</li>
+          </ul>
+        </div>
+        <div class="prog-visual" data-tab="4"></div>
+      </div>
+    </div>
+    <!-- 5 -->
+    <div class="prog-panel">
+      <div class="prog-panel-inner">
+        <div>
+          <div class="prog-num">06</div>
+          <div class="prog-title">Inne</div>
+          <p class="prog-desc">Darmowe miotły podstawą szkolnej demokracji.</p>
+          <ul class="prog-points">
+            <li>Sami sprzątajmy - miotły dla każdego</li>
+            <li>Legalizacja ministerstwa finansów</li>
+            <li>Bezpłatny internet LTE dla uczniów</li>
+            <li>Delegalizacja obrazy sztuki na szkolnych schodach</li>
+          </ul>
+        </div>
+        <div class="prog-visual" data-tab="5"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KONRAD -->
+<section class="sec sec-dark" id="konrad">
+  <div class="konrad-wrap">
+    <div class="konrad-img reveal">
+      <!--
+        ZDJĘCIE KG — podmień src poniżej na ścieżkę do swojego zdjęcia, np.:
+        src="zdjecie_konrada.jpg"
+        Zdjęcie powinno być w proporcji 3:4 (portret). Ustaw object-position jeśli chcesz kadrować inaczej.
+      -->
+      <img
+        class="konrad-photo"
+        src="https://via.placeholder.com/600x800/181818/E8173A?text=KG"
+        alt="Konrad Grabowski"
+        onerror="this.style.display='none'; this.parentElement.dataset.fallback='KG';"
+      />
+    </div>
+    <div class="reveal">
+      <div class="bar"></div>
+      <h2>Konrad<br>Grabowski</h2>
+      <p class="blockquote">"Biały papier toaletowy jest lepszy od szarego, bo jest biały."</p>
+      <p class="blockquote-sig">— Konrad Grabowski, założyciel EKG</p>
+      <p class="bio">Przedsiębiorca, intelektualista, potencjalny ojciec. Od 16 lat angażuje się w lokalne inicjatywy, wierząc, że nie jest obecny na liście Epsteina. EKG to jego odpowiedź na kryzys, który dotyka niepełnoletnie dzieci.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DOŁĄCZ -->
+<section id="dolacz" class="sec">
+  <div class="reveal">
+    <div class="bar"></div>
+    <h2>Dołącz<br>do EKG</h2>
+    <p>Bądź częścią ruchu, który da ci poczucie, że jesteś lepszy od innych.</p>
+
+  </div>
+</section>
+
+<!-- MANIFEST — ukryty, rozwijany -->
+<section id="manifest">
+  <div class="manifest-toggle-bar" onclick="toggleManifest(this)" aria-expanded="false">
+    <div class="manifest-toggle-left">
+      <div class="manifest-toggle-info">
+        <span class="manifest-toggle-label">Nasz <span>Manifest</span></span>
+        <span class="manifest-toggle-sub">Oficjalny dokument programowy EKG — kliknij, aby rozwinąć</span>
+      </div>
+    </div>
+    <div class="manifest-toggle-icon">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="manifest-body" id="manifestBody">
+
+    <!-- MANIFEST HERO -->
+    <div class="manifest-hero">
+      <div class="manifest-hero-watermark">MANIFEST</div>
+      <div class="manifest-hero-content">
+        <div class="manifest-hero-pill">
+          <span class="hero-pill-dot"></span>
+          Oficjalny dokument programowy EKG
+        </div>
+        <div class="manifest-h1">Nasz<br><em>Manifest</em></div>
+        <p class="manifest-hero-sub">Zbiór zasad, wartości i postulatów, które wyznaczają kierunek działania Epicentrum Konrada Grabowskiego. Każde słowo zostało przemyślane przez minimum 4 minuty.</p>
+      </div>
+    </div>
+
+    <!-- MANIFEST INTRO -->
+    <div class="manifest-intro">
+      <div class="intro-grid reveal">
+        <div>
+          <div class="bar"></div>
+          <p class="intro-lead">EKG to ruch, który wierzy, że <strong>każdy człowiek ma prawo</strong> do swoich poglądów — o ile są one zgodne z poglądami Konrada Grabowskiego. Polityka nie powinna być trudna. <strong>Powinna być prosta, zrozumiała i lekko myląca.</strong></p>
+        </div>
+        <div class="intro-meta">
+          <div class="meta-item">
+            <div class="meta-label">Data uchwalenia</div>
+            <div class="meta-val">Środa, gdzieś w okolicach obiadu</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Autor</div>
+            <div class="meta-val">Konrad Grabowski (sam, bo inni nie chcieli)</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Status prawny</div>
+            <div class="meta-val">Wiążący moralnie, niewiążący prawnie, zdecydowanie wiążący dla osób słabszych duchem</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Liczba poprawek</div>
+            <div class="meta-val">0 — bo za pierwszym razem wyszło idealnie</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POSTULATY -->
+    <div class="manifest-postulaty">
+      <div class="postulaty-intro reveal">
+        <div class="bar" style="background:var(--black)"></div>
+        <h2>Postulaty<br>Programowe</h2>
+        <p>Poniżej lista żądań, które EKG zamierza zrealizować w ciągu pierwszych 100 dni rządzenia, lub do pierwszej wycieczki klasowej — cokolwiek nastąpi wcześniej.</p>
+      </div>
+
+      <div class="postulat-list reveal">
+        <div class="postulat">
+          <span class="p-num">01</span>
+          <div class="p-body">
+            <span class="p-title">Obowiązkowa Drzemka Poobiedniana</span>
+            <span class="p-desc">Każdy obywatel ma prawo do 20-minutowej drzemki po 13:00. Pracodawcy odmawiający drzemki zostaną wpisani na listę wrogów dobrostanu narodowego i pozbawieni prawa do parkowania.</span>
+          </div>
+          <span class="p-tag">Dobrostan</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">02</span>
+          <div class="p-body">
+            <span class="p-title">Zakaz Używania Słowa "Synergii"</span>
+            <span class="p-desc">Użycie słowa "synergia" w oficjalnych dokumentach, prezentacjach i rozmowach przy kawie zagrożone jest grzywną w wysokości 1 kartonu soku pomarańczowego, płatnego bezpośrednio do kasy EKG.</span>
+          </div>
+          <span class="p-tag">Język</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">03</span>
+          <div class="p-body">
+            <span class="p-title">Przemianowanie Poniedziałku na "Małą Niedzielę"</span>
+            <span class="p-desc">Poniedziałek pozostaje dniem roboczym, jednak oficjalnie nazywa się "Małą Niedzielą" co, według wewnętrznych badań EKG, sprawia że pracownicy są o 0,3% mniej nieszczęśliwi.</span>
+          </div>
+          <span class="p-tag">Kalendarz</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">04</span>
+          <div class="p-body">
+            <span class="p-title">Ogólnopolski Rejestr Osób Głośno Jedzących Chipsy</span>
+            <span class="p-desc">Każda osoba spożywająca chipsy w miejscu publicznym w odległości mniejszej niż 2 metry od innej osoby zobowiązana jest do zarejestrowania się w Centralnym Rejestrze Chrupania i odbycia 3-godzinnego kursu empatii dźwiękowej.</span>
+          </div>
+          <span class="p-tag">Porządek</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">05</span>
+          <div class="p-body">
+            <span class="p-title">Legalizacja Chodzenia Tyłem w Godzinach 14:00–14:15</span>
+            <span class="p-desc">W ramach promocji kreatywności i "myślenia spoza pudełka" (inny zakazany zwrot — patrz postulat 02), każdy obywatel ma prawo poruszać się tyłem przez kwadrans dziennie bez konsekwencji prawnych. Wyjątek: rondo.</span>
+          </div>
+          <span class="p-tag">Mobilność</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">06</span>
+          <div class="p-body">
+            <span class="p-title">Dotacja do Zakupu Kożuchów dla Gołębi Miejskich</span>
+            <span class="p-desc">Każda gmina powyżej 10 000 mieszkańców zobowiązana jest przeznaczyć 0,001% budżetu na uszyte ręcznie miniaturowe kożuszki dla gołębi. Realizacja programu nadzorowana przez Ministerstwo Ptactwa, które dopiero co powołamy.</span>
+          </div>
+          <span class="p-tag">Środowisko</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">07</span>
+          <div class="p-body">
+            <span class="p-title">Zniesienie Gramatycznego Trybu Warunkowego</span>
+            <span class="p-desc">Zwroty takie jak "mogłoby być", "może warto rozważyć" i "niejako" zostaną usunięte z języka polskiego w ramach programu Radykalnej Konkretyzacji Mowy Publicznej. Naruszenie karane przepisaniem zdania 40 razy w trybie oznajmującym.</span>
+          </div>
+          <span class="p-tag">Język</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">08</span>
+          <div class="p-body">
+            <span class="p-title">Podatek od Zbyt Długich Paragonów</span>
+            <span class="p-desc">Każdy paragon przekraczający długość 40 cm objęty zostanie specjalnym podatkiem paragrafowym w wysokości 0,50 zł za każdy dodatkowy centymetr. Środki trafią na Fundusz Leśny, który będzie sadził drzewa będące w pewnym sensie zamiennikiem tych paragonów.</span>
+          </div>
+          <span class="p-tag">Finanse</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">09</span>
+          <div class="p-body">
+            <span class="p-title">Obowiązkowe Powitanie "Cześć, jak leci" Zastąpione "Cześć, Konrad Grabowski to wizjoner"</span>
+            <span class="p-desc">Oficjalne powitanie obywatelskie zostaje ujednolicone. Dopuszczalna forma skrócona: "Cześć, KG" lub po prostu mocne skinienie głową w kierunku portretu założyciela, który znajdować się będzie we wszystkich budynkach użyteczności publicznej.</span>
+          </div>
+          <span class="p-tag">Kultura</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">10</span>
+          <div class="p-body">
+            <span class="p-title">Reforma Chmur: Każda Chmura Musi Wyglądać jak Coś</span>
+            <span class="p-desc">Chmury niekształtne i nierozpoznawalne uznane zostaną za marnowanie miejsca na niebie. Powołana zostanie Komisja ds. Kształtów Atmosferycznych, która — w drodze demokratycznego głosowania — będzie zatwierdzać dopuszczalne sylwetki. Pierwsze propozycje: pies, Polska, twarz Konrada.</span>
+          </div>
+          <span class="p-tag">Infrastruktura</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">11</span>
+          <div class="p-body">
+            <span class="p-title">Wprowadzenie Nowej Jednostki Czasu: "Konradosekunda"</span>
+            <span class="p-desc">Konradosekunda równa się 1,3 sekundy i stosowana będzie wyłącznie do mierzenia czasu reakcji urzędników publicznych. Jeśli urzędnik odpowie w więcej niż 50 konradosekund, automatycznie zostaje wysłany na kurs szybkiego pisania.</span>
+          </div>
+          <span class="p-tag">Nauka</span>
+        </div>
+        <div class="postulat">
+          <span class="p-num">12</span>
+          <div class="p-body">
+            <span class="p-title">Zakaz Kończenia Prezentacji Slajdem "Dziękuję za uwagę"</span>
+            <span class="p-desc">Ostatni slajd każdej prezentacji publicznej musi zawierać śmiały postulat, cytat Konrada Grabowskiego lub przynajmniej zdjęcie kota. Slajd "Dziękuję za uwagę" na białym tle uznawany jest za obrazę inteligencji odbiorcy i podlega przepadkowi laptopa.</span>
+          </div>
+          <span class="p-tag">Edukacja</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- WARTOSCI -->
+    <div class="manifest-wartosci">
+      <div class="reveal">
+        <div class="bar"></div>
+        <h2 style="color:var(--white)">Nasze<br>Wartości</h2>
+        <p style="max-width:540px; font-size:16px; line-height:1.75; color:rgba(245,242,236,0.62)">jakwymysletobedzie</p>
+      </div>
+      <div class="wartosci-grid reveal">
+        <div class="wartosc">
+          <div class="w-num">I</div>
+          <div class="w-title">jakwymysletobedzie</div>
+          <div class="w-desc">jakwymysletobedzie</div>
+        </div>
+        <div class="wartosc">
+          <div class="w-num">II</div>
+          <div class="w-title">jakwymysletobedzie</div>
+          <div class="w-desc">jakwymysletobedzie</div>
+        </div>
+        <div class="wartosc">
+          <div class="w-num">III</div>
+          <div class="w-title">jakwymysletobedzie</div>
+          <div class="w-desc">jakwymysletobedzie</div>
+        </div>
+        <div class="wartosc">
+          <div class="w-num">IV</div>
+          <div class="w-title">jakwymysletobedzie</div>
+          <div class="w-desc">jakwymysletobedzie</div>
+        </div>
+        <div class="wartosc">
+          <div class="w-num">V</div>
+          <div class="w-title">jakwymysletobedzie</div>
+          <div class="w-desc">jakwymysletobedzie</div>
+        </div>
+        <div class="wartosc">
+          <div class="w-num">VI</div>
+          <div class="w-title">jakwymysletobedzie</div>
+          <div class="w-desc">jakwymysletobedzie</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CYTAT -->
+    <div class="manifest-cytat">
+      <div class="reveal">
+        <p class="big-quote">"Polska zasługuje na lepsze jutro. Jutro zaczyna się pojutrze, żebyśmy mieli czas się przygotować"</p>
+        <p class="big-quote-sig">— Konrad Grabowski</p>
+      </div>
+    </div>
+
+    <!-- PODPISZ -->
+    <div class="manifest-sign">
+      <div class="reveal">
+        <div class="bar"></div>
+        <h2>Podpisz<br>Manifest</h2>
+        <p>Dołącz do grona osób, które zgadzają się z powyższym lub przynajmniej nie przeczytały go wystarczająco uważnie żeby się nie zgodzić.</p>
+
+      </div>
+    </div>
+
+  </div><!-- /manifest-body -->
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="foot-logo">EKG</span>
+  <span>© 2026 Epicentrum Konrada Grabowskiego. Wszelkie prawa zastrzeżone, szczególnie prawo do przesady.</span>
+  <span>
+    Polityka prywatności&nbsp;·&nbsp;Kontakt
+  </span>
+</footer>
+
+<script>
+  // ── TABS ──
+  function switchTab(idx) {
+    document.querySelectorAll('.prog-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+    document.querySelectorAll('.prog-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+  }
+
+  // ── MANIFEST TOGGLE ──
+  function toggleManifest(bar) {
+    const body = document.getElementById('manifestBody');
+    const isOpen = body.classList.toggle('open');
+    bar.setAttribute('aria-expanded', isOpen);
+    bar.closest('section').classList.toggle('manifest-open', isOpen);
+    if (isOpen) {
+      setTimeout(() => {
+        bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // trigger reveal animations inside manifest
+        document.querySelectorAll('#manifestBody .reveal').forEach(el => obs.observe(el));
+      }, 80);
+    }
+  }
+
+  // ── SVG VISUALS ──
+  const svgs = [
+    `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="44" width="14" height="28" rx="3" fill="#E8173A" opacity="0.2"/>
+      <rect x="26" y="28" width="14" height="44" rx="3" fill="#E8173A" opacity="0.5"/>
+      <rect x="44" y="16" width="14" height="56" rx="3" fill="#E8173A"/>
+      <rect x="62" y="34" width="14" height="38" rx="3" fill="#E8173A" opacity="0.35"/>
+    </svg>`,
+    `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="30" y="8" width="20" height="64" rx="6" fill="#E8173A" opacity="0.15"/>
+      <rect x="8" y="30" width="64" height="20" rx="6" fill="#E8173A" opacity="0.15"/>
+      <rect x="34" y="12" width="12" height="56" rx="4" fill="#E8173A" opacity="0.6"/>
+      <rect x="12" y="34" width="56" height="12" rx="4" fill="#E8173A" opacity="0.6"/>
+    </svg>`,
+    `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="20" r="7" fill="#E8173A" opacity="0.2"/>
+      <circle cx="40" cy="20" r="7" fill="#E8173A" opacity="0.5"/>
+      <circle cx="60" cy="20" r="7" fill="#E8173A" opacity="0.2"/>
+      <circle cx="20" cy="40" r="7" fill="#E8173A" opacity="0.5"/>
+      <circle cx="40" cy="40" r="7" fill="#E8173A"/>
+      <circle cx="60" cy="40" r="7" fill="#E8173A" opacity="0.5"/>
+      <circle cx="20" cy="60" r="7" fill="#E8173A" opacity="0.2"/>
+      <circle cx="40" cy="60" r="7" fill="#E8173A" opacity="0.5"/>
+      <circle cx="60" cy="60" r="7" fill="#E8173A" opacity="0.2"/>
+    </svg>`,
+    `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 68 A36 36 0 0 1 68 68" stroke="#E8173A" stroke-width="4" stroke-linecap="round" opacity="0.2"/>
+      <path d="M20 68 A28 28 0 0 1 60 68" stroke="#E8173A" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+      <path d="M28 68 A20 20 0 0 1 52 68" stroke="#E8173A" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="40" cy="68" r="4" fill="#E8173A"/>
+    </svg>`,
+    `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="40,6 54,14 54,30 40,38 26,30 26,14" fill="#E8173A" opacity="0.15" stroke="#E8173A" stroke-width="1.5"/>
+      <polygon points="40,42 54,50 54,66 40,74 26,66 26,50" fill="#E8173A" opacity="0.15" stroke="#E8173A" stroke-width="1.5"/>
+      <polygon points="16,24 30,32 30,48 16,56 2,48 2,32" fill="#E8173A" opacity="0.08" stroke="#E8173A" stroke-width="1.5"/>
+      <polygon points="64,24 78,32 78,48 64,56 50,48 50,32" fill="#E8173A" opacity="0.08" stroke="#E8173A" stroke-width="1.5"/>
+      <polygon points="40,24 47,28 47,36 40,40 33,36 33,28" fill="#E8173A"/>
+    </svg>`,
+    `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="32" y="32" width="16" height="16" rx="3" fill="#E8173A"/>
+      <line x1="40" y1="8" x2="40" y2="32" stroke="#E8173A" stroke-width="2" opacity="0.4"/>
+      <line x1="40" y1="48" x2="40" y2="72" stroke="#E8173A" stroke-width="2" opacity="0.4"/>
+      <line x1="8" y1="40" x2="32" y2="40" stroke="#E8173A" stroke-width="2" opacity="0.4"/>
+      <line x1="48" y1="40" x2="72" y2="40" stroke="#E8173A" stroke-width="2" opacity="0.4"/>
+      <circle cx="40" cy="8" r="4" fill="#E8173A" opacity="0.5"/>
+      <circle cx="40" cy="72" r="4" fill="#E8173A" opacity="0.5"/>
+      <circle cx="8" cy="40" r="4" fill="#E8173A" opacity="0.5"/>
+      <circle cx="72" cy="40" r="4" fill="#E8173A" opacity="0.5"/>
+      <line x1="32" y1="32" x2="16" y2="16" stroke="#E8173A" stroke-width="1.5" opacity="0.25"/>
+      <line x1="48" y1="32" x2="64" y2="16" stroke="#E8173A" stroke-width="1.5" opacity="0.25"/>
+      <circle cx="16" cy="16" r="3" fill="#E8173A" opacity="0.25"/>
+      <circle cx="64" cy="16" r="3" fill="#E8173A" opacity="0.25"/>
+    </svg>`
+  ];
+  document.querySelectorAll('.prog-visual').forEach(el => {
+    const i = parseInt(el.dataset.tab);
+    el.innerHTML = svgs[i] || '';
+  });
+
+  // ── SCROLL REVEAL ──
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
